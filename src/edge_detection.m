@@ -1,4 +1,4 @@
-function edge_detection(original_img, opt)
+function output_image = edge_detection(original_img, opt)
 % 0 = Laplace    
 % 1 = LoG
 % 2 = Sobel
@@ -121,6 +121,5 @@ function edge_detection(original_img, opt)
     subplot(1, 3, 3);
     imshow(masked_image);
     title('Segmented Image');
-
-    
+    output_image = masked_image;
 end
