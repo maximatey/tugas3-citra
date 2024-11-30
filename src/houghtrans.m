@@ -1,12 +1,16 @@
-function output_image = houghtrans(image, p, q, threshold)
+function [output_image, edge_image] = houghtrans(image, p, q, threshold)
     [row, col, depth] = size(image);
     imggray = image;
     % Convert to gray
     if depth > 1
         imggray = rgb2gray(imggray);
     end
-    canny = edge(imggray, "canny", 0.3);
-    figure,imshow(canny)
+    canny = edge(imggray, "canny", [0.03,0.18]);
+    roi = zeros(row,col);
+    roi(ceil(row*2/3):end,:) = 1;
+    canny = canny & roi;
+%     figure,imshow(canny)
+    edge_image = canny;
     % Matrices for cosine and sine values
     Rad2Deg = 0.017453;
     cosmat = zeros(p, 1);
@@ -46,16 +50,19 @@ function output_image = houghtrans(image, p, q, threshold)
         for j = 0:q-1
             if MatrixP(i + 1, j + 1) > threshold
                 r = j * (SQRTD * 2.0) / (q - 1) - SQRTD;
-                for k = 0:row-1
-                    l = (r - k * cosmat(i + 1)) / sinmat(i + 1);
-                    if l >= 0 && l < col
-                        % Draw on the output image
+                x1 = 0; % Start at the top of the image
+                x2 = row - 1; % Bottom of the image
+                y1 = (r - x1 * cosmat(i + 1)) / sinmat(i + 1); % Calculate y for the top edge
+                y2 = (r - x2 * cosmat(i + 1)) / sinmat(i + 1); % Calculate y for the bottom edge
+
+                % Check bounds for y1 and y2
+                if y1 >= 0 && y1 < col
+                    if y2 >= 0 && y2 < col
+                        % Draw a line between (x1, y1) and (x2, y2)
                         if depth > 1
-                            output_image(k + 1, round(l + 1), 1) = 255; % Red channel
-                            output_image(k + 1, round(l + 1), 2) = 0;   % Green channel
-                            output_image(k + 1, round(l + 1), 3) = 0;   % Blue channel
+                            output_image = insertShape(output_image, 'Line', [y1, x1, y2, x2], 'Color', 'red', 'LineWidth', 1);
                         else
-                            output_image(k + 1, round(l + 1)) = 255;   % For grayscale
+                            output_image = insertShape(output_image, 'Line', [y1, x1, y2, x2], 'Color', [255, 255, 255], 'LineWidth', 1);
                         end
                     end
                 end
